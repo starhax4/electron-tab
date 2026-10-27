@@ -19,7 +19,7 @@ Install it globally, like any other CLI tool. Then you don't need to add it to e
 **On any PC with Node 18+**, straight from the GitHub release (no download, no clone):
 
 ```bash
-npm install -g https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
+npm install -g --allow-remote=all https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
 ```
 
 Or, from this zip:

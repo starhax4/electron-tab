@@ -5,7 +5,7 @@ tab, so you can share it with a teammate and let AI browser agents (Playwright, 
 DevTools MCP, Claude in Chrome) drive your desktop app like a website.
 
 ```bash
-npm install -g https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
+npm install -g --allow-remote=all https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
 electron-tab -- npm run dev     # in your Electron app's folder
 ```
 
