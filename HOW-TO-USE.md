@@ -16,13 +16,21 @@ mode and Lighthouse against your real app, without changing its code.
 
 Install it globally, like any other CLI tool. Then you don't need to add it to each app.
 
+**On any PC with Node 18+**, straight from the GitHub release (no download, no clone):
+
+```bash
+npm install -g https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
+```
+
+Or, from this zip:
+
 **Windows:** double-click **`install-global.cmd`** in this folder.
 **macOS / Linux:** run `sh install-global.sh`.
 
 Or run it by hand from this folder:
 
 ```bash
-npm install -g ./electron-tab-0.1.0.tgz
+npm install -g ./electron-tab-0.1.0-beta.1.tgz
 ```
 
 Then, in **any** Electron app folder, wrap the command that normally starts it:
@@ -61,7 +69,7 @@ electron-tab/
 ├── HOW-TO-USE.md              ← this file
 ├── install-global.cmd         ← Windows: double-click to install the CLI globally
 ├── install-global.sh          ← macOS/Linux: same
-├── electron-tab-0.1.0.tgz     ← the tool, packed (used by the installers / step 3)
+├── electron-tab-0.1.0-beta.1.tgz     ← the tool, packed (used by the installers / step 3)
 ├── packages/electron-tab/     ← the tool's source (CLI + bridge)
 │   ├── bin/cli.js
 │   ├── src/                   ← hook, bridge server, bundler, browser runtime
@@ -168,13 +176,13 @@ If you installed it globally (Quick start), skip to **Run it** and drop the `npx
 From your app's folder, install the **`.tgz`** file (adjust the path to where you unzipped this):
 
 ```bash
-npm install -D C:/path/to/electron-tab/electron-tab-0.1.0.tgz
+npm install -D C:/path/to/electron-tab/electron-tab-0.1.0-beta.1.tgz
 ```
 
 or with yarn:
 
 ```bash
-yarn add -D C:/path/to/electron-tab/electron-tab-0.1.0.tgz
+yarn add -D C:/path/to/electron-tab/electron-tab-0.1.0-beta.1.tgz
 ```
 
 > ⚠️ Install the `.tgz`, **not** the `packages/electron-tab` folder. npm only symlinks a folder

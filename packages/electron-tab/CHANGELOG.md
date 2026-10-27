@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (first beta)
+## 0.1.0-beta.1 (first beta)
 
 Run an Electron app's windows in a Chrome tab, bridged to the real Electron main process.
 

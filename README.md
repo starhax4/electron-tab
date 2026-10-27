@@ -5,7 +5,8 @@ tab, so you can share it with a teammate and let AI browser agents (Playwright, 
 DevTools MCP, Claude in Chrome) drive your desktop app like a website.
 
 ```bash
-npx electron-tab@beta -- npm run dev
+npm install -g https://github.com/starhax4/electron-tab/releases/latest/download/electron-tab.tgz
+electron-tab -- npm run dev     # in your Electron app's folder
 ```
 
 It prints a link. Open it in Chrome and your app is there: windows become panels you can

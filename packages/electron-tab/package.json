@@ -1,6 +1,6 @@
 {
   "name": "electron-tab",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "description": "Run your Electron app in a browser tab, bridged to the real main process. For sharing dev builds and for AI browser agents.",
   "keywords": [
     "electron",
