@@ -21,9 +21,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
+      # runtime.js is an ES module bundled by esbuild; the bundling step below checks it.
       - name: Syntax check
         shell: bash
-        run: for f in bin/*.js src/*.cjs src/patches/*.cjs src/client/*.js; do node --check "$f"; done
+        run: for f in bin/*.js src/*.cjs src/patches/*.cjs src/client/shell.js; do node --check "$f"; done
       - name: CLI starts
         run: node bin/cli.js --help
       - name: Browser runtime bundles
