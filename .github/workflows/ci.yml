@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [18, 22]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: packages/electron-tab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - name: Syntax check
+        shell: bash
+        run: for f in bin/*.js src/*.cjs src/patches/*.cjs src/client/*.js; do node --check "$f"; done
+      - name: CLI starts
+        run: node bin/cli.js --help
+      - name: Browser runtime bundles
+        run: node -e "require('./src/bundler.cjs').getRuntime().then((r) => console.log('runtime', r.code.length, 'bytes'))"
+      - name: Package contents
+        run: npm pack --dry-run

@@ -1,0 +1,42 @@
+{
+  "name": "electron-tab",
+  "version": "0.1.0",
+  "description": "Run your Electron app in a browser tab, bridged to the real main process. For sharing dev builds and for AI browser agents.",
+  "keywords": [
+    "electron",
+    "browser",
+    "devtools",
+    "ipc",
+    "testing",
+    "ai-agents",
+    "playwright"
+  ],
+  "homepage": "https://github.com/starhax4/electron-tab#readme",
+  "bugs": {
+    "url": "https://github.com/starhax4/electron-tab/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starhax4/electron-tab.git",
+    "directory": "packages/electron-tab"
+  },
+  "license": "MIT",
+  "author": "Hamza Islam",
+  "bin": {
+    "electron-tab": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chalk": "4.1.2",
+    "esbuild": "0.24.0",
+    "msgpackr": "1.11.2",
+    "ws": "8.18.0"
+  }
+}

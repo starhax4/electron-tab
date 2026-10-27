@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+*.tgz
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,28 @@
+body {
+  font: 15px/1.5 system-ui, sans-serif;
+  margin: 2rem;
+  color: #1d2433;
+  background: #f5f8ff;
+}
+
+table {
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+td,
+th {
+  border: 1px solid #d0d5dd;
+  padding: 0.35rem 0.7rem;
+  text-align: left;
+}
+
+tr[data-status='pass'] td:nth-child(2) {
+  color: #067647;
+  font-weight: 600;
+}
+
+tr[data-status='fail'] td:nth-child(2) {
+  color: #b42318;
+  font-weight: 600;
+}

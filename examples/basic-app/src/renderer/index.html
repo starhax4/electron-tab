@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>electron-tab basic app</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <h1>electron-tab basic app</h1>
+    <p id="runtime"></p>
+    <p>Clock from main: <strong id="clock">–</strong> · Hello from main: <span id="hello">–</span></p>
+    <h2>IPC checks</h2>
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Status</th><th>Detail</th></tr>
+      </thead>
+      <tbody id="checks"></tbody>
+    </table>
+    <p><button id="open-file">Open native file dialog</button> <span id="picked"></span></p>
+    <p><button id="open-window">Open a second window</button></p>
+    <p><button id="print-window">Print this window (webContents.print)</button></p>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

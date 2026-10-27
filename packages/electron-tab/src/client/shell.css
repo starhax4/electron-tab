@@ -1,0 +1,437 @@
+:root {
+  --ew-bg: #e9ebef;
+  --ew-panel: #ffffff;
+  --ew-bar: #f4f5f7;
+  --ew-bar-focused: #dfe3ea;
+  --ew-text: #1d2330;
+  --ew-muted: #6b7280;
+  --ew-border: #c8cdd6;
+  --ew-accent: #2f6fde;
+  --ew-danger: #c42b1c;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ew-bg: #15171c;
+    --ew-panel: #1f2229;
+    --ew-bar: #262a33;
+    --ew-bar-focused: #323846;
+    --ew-text: #e6e8ec;
+    --ew-muted: #9aa1ad;
+    --ew-border: #3a404c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ew-bg);
+  color: var(--ew-text);
+  font: 13px system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.ew-desktop {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ew-empty {
+  margin: 3rem auto;
+  text-align: center;
+  color: var(--ew-muted);
+}
+
+.ew-banner {
+  padding: 8px 12px;
+  background: #b42318;
+  color: #fff;
+}
+
+/* ------------------------------------------------------------------ panels */
+
+.ew-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: var(--ew-panel);
+  border: 1px solid var(--ew-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+}
+
+.ew-panel.ew-focused {
+  box-shadow: 0 10px 32px rgb(0 0 0 / 0.25);
+  border-color: var(--ew-accent);
+}
+
+.ew-panel.ew-opening {
+  animation: ew-open 160ms ease-out;
+}
+
+@keyframes ew-open {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* Hidden windows keep loading (that is what fires ready-to-show), just out of sight. */
+.ew-panel.ew-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ew-panel.ew-maximized,
+.ew-panel.ew-fullscreen {
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0;
+  border-width: 0;
+}
+
+.ew-panel.ew-fullscreen {
+  z-index: 100000 !important;
+}
+
+.ew-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 0 0 12px;
+  background: var(--ew-bar);
+  border-bottom: 1px solid var(--ew-border);
+  cursor: default;
+  user-select: none;
+  touch-action: none;
+}
+
+.ew-focused .ew-titlebar {
+  background: var(--ew-bar-focused);
+}
+
+.ew-fullscreen .ew-titlebar,
+.ew-frameless .ew-titlebar,
+.ew-layout-tabs .ew-titlebar {
+  display: none;
+}
+
+.ew-title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ew-controls {
+  display: flex;
+  height: 100%;
+}
+
+.ew-controls button {
+  width: 44px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+}
+
+.ew-controls button:hover {
+  background: rgb(128 128 128 / 0.2);
+}
+
+.ew-controls .ew-close:hover {
+  background: var(--ew-danger);
+  color: #fff;
+}
+
+.ew-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
+
+/* While a panel is dragged, iframes must not swallow the pointer. */
+.ew-dragging .ew-frame {
+  pointer-events: none;
+}
+
+/* A visible modal child blocks its parent. */
+.ew-blocker {
+  display: none;
+  position: absolute;
+  inset: 32px 0 0 0;
+  background: rgb(0 0 0 / 0.25);
+}
+
+.ew-blocked .ew-blocker {
+  display: block;
+}
+
+.ew-frameless .ew-blocker,
+.ew-layout-tabs .ew-blocker {
+  inset: 0;
+}
+
+.ew-grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.ew-fixed .ew-grip,
+.ew-maximized .ew-grip,
+.ew-fullscreen .ew-grip {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ window numbers */
+
+/* The window id (BrowserWindow.id), shown on the title bar and in the strip. */
+.ew-num {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgb(128 128 128 / 0.18);
+  color: var(--ew-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ew-focused .ew-titlebar .ew-num,
+.ew-strip-item[data-state='focused'] .ew-num {
+  background: var(--ew-accent);
+  color: #fff;
+}
+
+.ew-panel:not(.ew-focused) .ew-title {
+  color: var(--ew-muted);
+}
+
+.ew-focused .ew-titlebar {
+  box-shadow: inset 0 2px 0 var(--ew-accent);
+}
+
+/* ------------------------------------------------------------------ tab strip and taskbar */
+
+.ew-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 8px;
+  background: var(--ew-bar);
+  border: 0 solid var(--ew-border);
+}
+
+.ew-tabs {
+  border-bottom-width: 1px;
+}
+
+.ew-taskbar {
+  border-top-width: 1px;
+}
+
+.ew-strip-items {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.ew-strip-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 220px;
+  min-width: 96px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: background-color 120ms, border-color 120ms, opacity 120ms;
+}
+
+.ew-strip-item:hover {
+  background: rgb(128 128 128 / 0.14);
+}
+
+.ew-strip-focus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 4px 0 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.ew-strip-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ew-strip-focus:focus-visible,
+.ew-strip-close:focus-visible {
+  outline: 2px solid var(--ew-accent);
+  outline-offset: -2px;
+  border-radius: 5px;
+}
+
+.ew-strip-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 3px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ew-muted);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+}
+
+.ew-strip-item:hover .ew-strip-close,
+.ew-strip-item[data-state='focused'] .ew-strip-close,
+.ew-strip-close:focus-visible {
+  opacity: 1;
+}
+
+.ew-strip-close:hover {
+  background: var(--ew-danger);
+  color: #fff;
+}
+
+/* The focused window: raised, bold, with an accent bar on the edge facing the desktop. */
+.ew-strip-item[data-state='focused'] {
+  background: var(--ew-panel);
+  border-color: var(--ew-border);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.ew-strip-item[data-state='focused'] .ew-strip-label {
+  font-weight: 600;
+}
+
+.ew-strip-item[data-state='focused']::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--ew-accent);
+}
+
+.ew-taskbar .ew-strip-item[data-state='focused']::after {
+  top: -5px;
+}
+
+.ew-tabs .ew-strip-item[data-state='focused']::after {
+  bottom: -5px;
+}
+
+.ew-strip-item[data-state='minimized'] {
+  opacity: 0.6;
+}
+
+.ew-strip-item[data-state='minimized'] .ew-strip-label {
+  font-style: italic;
+}
+
+/* A window that just opened slides in and flashes once. */
+.ew-strip-item.ew-new {
+  animation: ew-arrive 700ms ease-out;
+}
+
+@keyframes ew-arrive {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+    background: color-mix(in srgb, var(--ew-accent) 35%, transparent);
+  }
+  30% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.ew-status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  color: var(--ew-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ew-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9aa1ad;
+}
+
+.ew-status[data-connection='open'] .ew-dot {
+  background: #1f9d55;
+}
+
+.ew-status[data-connection='closed'] .ew-dot {
+  background: var(--ew-danger);
+  animation: ew-blink 1s steps(2) infinite;
+}
+
+@keyframes ew-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ew-strip-item.ew-new,
+  .ew-panel.ew-opening,
+  .ew-status[data-connection='closed'] .ew-dot {
+    animation: none;
+  }
+}
