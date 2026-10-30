@@ -1,4 +1,4 @@
-# electron-tab
+# electron2web
 
 **Your Electron app, in a browser tab.** Same main process, real IPC, every window in one
 tab, so you can share it with a teammate and let AI browser agents (Playwright, Chrome
