@@ -1,4 +1,4 @@
-# electron-tab: plan for full Electron API coverage
+# electron2web: plan for full Electron API coverage
 
 **Goal:** run a whole Electron app inside one browser tab, so that both people and AI browser
 agents (Playwright MCP, Chrome DevTools MCP, Claude in Chrome, and others) can use **every** part
@@ -25,7 +25,7 @@ Status: **P0 is built** (see §8). Everything else is planned; built items are m
    `{ response, checkboxChecked }`; a web open dialog resolves `{ canceled, filePaths }` with
    **real host paths**. App code can't tell the difference.
 5. **Fail loudly, never silently.** An API with no fallback logs one clear
-   `[electron-tab] X is not supported` line and returns a harmless value. It never crashes main.
+   `[electron2web] X is not supported` line and returns a harmless value. It never crashes main.
 
 ---
 
@@ -106,7 +106,7 @@ tab:
   - This fixes today's "multiple windows loading different origins" gap, because the proxy can
     route by `Host` header.
 - **Auth:** each subdomain needs its own cookie, so the shell loads iframes through
-  `/__electron-tab/auth?token=…&next=/`.
+  `/__electron2web/auth?token=…&next=/`.
 - **The old per-window URL keeps working:** `/?__ew_win=<id>` redirects to that window's
   `o<n>.app.localhost` origin and shows it alone, for tests and agents that want a single target.
 
@@ -233,14 +233,14 @@ Legend: ✅ works today · 🟡 partial · P1–P4 planned phase (§4) · ⛔ st
 | `globalShortcut.register` | host-wide | Tab keydown listener (works only while the tab has focus; documented) | P2 |
 | `powerSaveBlocker` | host | Screen Wake Lock API in the tab | P4 |
 | `powerMonitor` (`suspend`, `resume`, `lock-screen`, `getSystemIdleTime`) | host | Keep host; add Page Visibility as `lock-screen`/`unlock-screen` when tab-driven mode is on | P4 |
-| `protocol.handle`, `registerFileProtocol`, custom schemes (`app://`) | ⛔ 501 | Route `/__electron-tab/proto/<scheme>/…` → build a `Request` → call the app's handler in main → stream the `Response`. Pages loaded from `app://` are served under that route. The runtime rewrites `app://` in `src`/`href`/`fetch`/XHR/CSS `url()` | P2 |
-| `file://` URLs inside the page (local images, videos) | 🔲 broken | Route `/__electron-tab/file?p=…`, allowed only for paths under the app folder or paths main already handed out (dialogs, drops) | P2 |
-| CORS: `webSecurity: false`, `session.webRequest` header rewriting | 🔲 fails in Chrome | Runtime sends cross-origin `fetch`/XHR to `/__electron-tab/net`, which runs `net.fetch` in main under the window's session, so `webRequest` hooks and session cookies apply | P2 |
+| `protocol.handle`, `registerFileProtocol`, custom schemes (`app://`) | ⛔ 501 | Route `/__electron2web/proto/<scheme>/…` → build a `Request` → call the app's handler in main → stream the `Response`. Pages loaded from `app://` are served under that route. The runtime rewrites `app://` in `src`/`href`/`fetch`/XHR/CSS `url()` | P2 |
+| `file://` URLs inside the page (local images, videos) | 🔲 broken | Route `/__electron2web/file?p=…`, allowed only for paths under the app folder or paths main already handed out (dialogs, drops) | P2 |
+| CORS: `webSecurity: false`, `session.webRequest` header rewriting | 🔲 fails in Chrome | Runtime sends cross-origin `fetch`/XHR to `/__electron2web/net`, which runs `net.fetch` in main under the window's session, so `webRequest` hooks and session cookies apply | P2 |
 | `session.cookies` | host session | Unchanged for main-side requests; documented that the tab's own cookies are Chrome's | P2 |
 | `session.on('will-download')`, `webContents.downloadURL`, `DownloadItem` | 🔲 | `web`: stream the file to the tab as a browser download (agent-visible); `native`: save on host (today) | P2 |
 | `session.setPermissionRequestHandler` (camera, mic, notifications) | 🔲 | Chrome's own permission prompts; when main's handler denies, the runtime blocks that API | P4 |
 | `desktopCapturer.getSources` | host | `getDisplayMedia` in the tab (the user picks; agents can't) | P4 |
-| `app.setAsDefaultProtocolClient`, `open-url`, `second-instance`, `open-file` | host | Control page and `/__electron-tab/open-url?url=…` endpoint to fire these by hand or from tests | P3 |
+| `app.setAsDefaultProtocolClient`, `open-url`, `second-instance`, `open-file` | host | Control page and `/__electron2web/open-url?url=…` endpoint to fire these by hand or from tests | P3 |
 | `app.getPath/getVersion/getLocale/…` | ✅ host | | |
 | `fs`, `child_process`, `net`, `safeStorage`, `systemPreferences`, `utilityProcess` in main | ✅ host | | |
 | `autoUpdater`, `crashReporter`, `contentTracing`, `netLog` | host | ⛔ stub in dev (`update-not-available`, no-op) | P4 |
@@ -259,7 +259,7 @@ preview) is the reference app for P0–P2.
 | **P1 Visible UI** | Web dialogs (message, error, open, save with real paths); app menu + roles + accelerators; context menus (`Menu.popup` + `context-menu` event); `window.open`/`setWindowOpenHandler`; modal/child windows; frameless windows; Notification toasts; `shell.openExternal`; `executeJavaScript`/`insertCSS`; navigation events; `before-input-event`; edit commands | An agent using only the browser (Playwright MCP) can open a file, use every menu item, answer every dialog, and use a modal window in the sample app and in a large real-world app | L |
 | **P2 Plumbing** | Custom protocols; `file://` assets; CORS via `net`; downloads; drag-drop paths / `getPathForFile`; clipboard; `screen`/`nativeTheme`; `globalShortcut`; `printToPDF`/`capturePage` through DOM snapshots; `console-message`, crash events; UA option; env snapshot | A real app's print, PDF and file flows all work from the tab with no native window appearing | L |
 | **P3 Compatibility** | MessagePort IPC; Node RPC (preload builtins, `nodeIntegration`, `@electron/remote`); `BrowserView`/`WebContentsView`/`<webview>`; Tray; badges and progress; deep links; always-on-top/opacity | One older app (nodeIntegration + remote) and one `WebContentsView` app run unchanged | XL |
-| **P4 Agent tooling and polish** | `/__electron-tab/state` JSON (windows, open dialogs, menus); event log; ARIA audit; `--headless` (no native window may ever appear: helpers stay offscreen); dialog auto-answer rules for tests; sync dialogs via worker bridge; MCP server (`electron-tab mcp`: list windows, click menu item, answer dialog, read IPC log); remaining stubs | An agent can drive a full app flow with only the shell URL, with no human help on the host | L |
+| **P4 Agent tooling and polish** | `/__electron2web/state` JSON (windows, open dialogs, menus); event log; ARIA audit; `--headless` (no native window may ever appear: helpers stay offscreen); dialog auto-answer rules for tests; sync dialogs via worker bridge; MCP server (`electron2web mcp`: list windows, click menu item, answer dialog, read IPC log); remaining stubs | An agent can drive a full app flow with only the shell URL, with no human help on the host | L |
 
 P0 → P1 → P2 must happen in order. P3 and P4 items are independent of each other and can be
 done in any order after P1.
@@ -293,7 +293,7 @@ done in any order after P1.
    pass `--layout single` for one simple target.
 3. **Node RPC scope:** proxying `fs`/`child_process` from page code is powerful and risky.
    Proposal: off by default, enabled per app with `--node-rpc`, only on `127.0.0.1`.
-4. **MCP server:** build it into the CLI (`electron-tab mcp`) or ship it as a separate package?
+4. **MCP server:** build it into the CLI (`electron2web mcp`) or ship it as a separate package?
 
 ---
 
@@ -320,7 +320,7 @@ done in any order after P1.
 Built: patch registry (`src/patches/{ipc,dialog,window}.cjs`), two-way RPC (`bridge.call`),
 shell (`src/client/shell.{js,css}`) with `desktop`/`tabs`/`single` layouts, per-origin
 `o<n>.app.localhost` routing, window state mirroring, `executeJavaScript`, title and focus
-reporting, `/__electron-tab/state` JSON, `--layout` and `--native` flags. The sample app has
+reporting, `/__electron2web/state` JSON, `--layout` and `--native` flags. The sample app has
 12 checks (all pass) and an "Open a second window" button.
 
 §6 defaults taken: surface `web` (flag `--native` exists; nothing uses it until P1), layout

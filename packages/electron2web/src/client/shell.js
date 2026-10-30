@@ -2,7 +2,7 @@
 // Main owns each window's state (bounds, focus, minimised, ...); the shell draws it and
 // reports what the user does with a panel back to main.
 (() => {
-  const PREFIX = '/__electron-tab';
+  const PREFIX = '/__electron2web';
   const config = JSON.parse(document.getElementById('ew-config').textContent);
   const layout = config.layout;
 
@@ -64,7 +64,7 @@
       try {
         const res = await fetch(`${PREFIX}/ping`, { cache: 'no-store' });
         if (res.ok) return location.reload();
-        if (res.status === 401) return showBanner('Not authorized — reopen the URL printed by electron-tab.');
+        if (res.status === 401) return showBanner('Not authorized — reopen the URL printed by electron2web.');
       } catch {}
       waitForBridge();
     }, 400);
@@ -104,7 +104,7 @@
   }
 
   function showBanner(text) {
-    banner.textContent = `electron-tab: ${text}`;
+    banner.textContent = `electron2web: ${text}`;
     banner.hidden = false;
   }
 
@@ -127,8 +127,8 @@
   const stateOf = (view) => (view.minimized ? 'minimized' : !view.visible ? 'hidden' : view.focused ? 'focused' : 'background');
 
   // For browser agents and tests: drive the windows without hunting for buttons. Windows are
-  // addressed by the number on their badge. (GET /__electron-tab/state returns the same list.)
-  window.electronTab = Object.freeze({
+  // addressed by the number on their badge. (GET /__electron2web/state returns the same list.)
+  window.electron2web = Object.freeze({
     windows: () =>
       [...views.values()]
         .filter((view) => view.host)
@@ -178,7 +178,7 @@
     if (layout !== 'single') renderStrip();
     renderStatus();
     const focused = shown.find((view) => view.focused);
-    document.title = focused?.title || 'electron-tab';
+    document.title = focused?.title || 'electron2web';
   }
 
   const isOnScreen = (view) => view.visible && !view.minimized;

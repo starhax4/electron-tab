@@ -222,7 +222,7 @@ function patchContents(win, bridge, handlers) {
     callback?.(true, '');
   };
   contents.printToPDF = async () => {
-    throw new Error('[electron-tab] printToPDF() is not supported for windows shown in the browser');
+    throw new Error('[electron2web] printToPDF() is not supported for windows shown in the browser');
   };
 
   const { handle, handleOnce, removeHandler } = contents.ipc;

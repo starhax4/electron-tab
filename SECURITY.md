@@ -1,8 +1,8 @@
 # Security policy
 
-electron-tab exposes your app's Electron main process (full filesystem and native access) to a
+electron2web exposes your app's Electron main process (full filesystem and native access) to a
 browser tab. Its protections are described in the
-[package README](packages/electron-tab/README.md#security).
+[package README](packages/electron2web/README.md#security).
 
 ## Reporting a vulnerability
 

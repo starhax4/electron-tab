@@ -13,8 +13,8 @@ const codec = require('./codec.cjs');
 const { getRuntime, getPreload, getSourceMap } = require('./bundler.cjs');
 const logger = require('./log.cjs');
 
-const PREFIX = '/__electron-tab';
-const COOKIE = 'electron_tab_token';
+const PREFIX = '/__electron2web';
+const COOKIE = 'electron2web_token';
 // Chrome resolves *.localhost to loopback. The shell lives on app.localhost and each page
 // origin the app loads gets its own o<n>.app.localhost. They all share the site
 // "app.localhost", so the SameSite=Strict auth cookie is still sent inside the shell's iframes.
@@ -48,9 +48,9 @@ const MIME = {
 
 function createBridge({ electron, port, token, layout, publicUrl }) {
   if (!token) {
-    throw new Error('[electron-tab] ELECTRON_TAB_TOKEN is missing — start the app through the electron-tab CLI.');
+    throw new Error('[electron2web] ELECTRON2WEB_TOKEN is missing — start the app through the electron2web CLI.');
   }
-  if (!LAYOUTS.has(layout)) throw new Error(`[electron-tab] unknown layout '${layout}' (use desktop, tabs or single)`);
+  if (!LAYOUTS.has(layout)) throw new Error(`[electron2web] unknown layout '${layout}' (use desktop, tabs or single)`);
 
   const log = logger.info;
   const windows = new Map();
@@ -130,7 +130,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       // the header cross-origin without a CORS preflight, which the bridge never grants.
       const forwarded = String(req.headers['x-forwarded-host'] ?? '').split(',')[0].trim().toLowerCase();
       if (isPublicHost(forwarded)) return { kind: 'public' };
-      if (req.headers['x-forwarded-for']) hintOnce('proxied', `a request came through a proxy as ${host}. To use electron-tab through a tunnel or proxy, start it with --public-host <its public URL>.`);
+      if (req.headers['x-forwarded-for']) hintOnce('proxied', `a request came through a proxy as ${host}. To use electron2web through a tunnel or proxy, start it with --public-host <its public URL>.`);
       return { kind: 'legacy' };
     }
     const match = /^o(\d+)\.app\.localhost:(\d+)$/.exec(host);
@@ -408,7 +408,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       const id = nextCallId++;
       const timer = setTimeout(() => {
         calls.delete(id);
-        const err = new Error(`[electron-tab] no browser tab answered '${op}' within ${timeout / 1000}s`);
+        const err = new Error(`[electron2web] no browser tab answered '${op}' within ${timeout / 1000}s`);
         reject(Object.assign(err, { code: 'ETIMEDOUT' }));
       }, timeout);
       calls.set(id, { target, message: { type: 'call', id, op, payload }, socket: null, resolve, reject, timer });
@@ -460,7 +460,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
     } catch {
       body = `${code}\n`;
     }
-    execScripts.set(key, `globalThis.__electronTabExec(${JSON.stringify(key)}, async () => {\n${body}});`);
+    execScripts.set(key, `globalThis.__electron2webExec(${JSON.stringify(key)}, async () => {\n${body}});`);
     try {
       return await call(id, 'executeJavaScript', { key });
     } finally {
@@ -674,7 +674,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
   async function handleRequest(req, res) {
     // Host check blocks DNS-rebinding pages from reaching the bridge.
     const host = classifyHost(req);
-    if (!host) return send(res, 403, 'Forbidden host. To reach electron-tab through a tunnel or proxy, start it with --public-host <its URL>.');
+    if (!host) return send(res, 403, 'Forbidden host. To reach electron2web through a tunnel or proxy, start it with --public-host <its URL>.');
     const url = new URL(req.url, `http://${req.headers.host}`);
     const isPublic = host.kind === 'public';
 
@@ -688,11 +688,11 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       // another site (127.0.0.1 → app.localhost), a redirect would still count as cross-site
       // and the browser would hold back the Strict cookie on the next request.
       const next = JSON.stringify(safeNext(url.searchParams.get('next'))).replace(/</g, '\\u003c');
-      return send(res, 200, `<!doctype html><meta charset="utf-8"><title>electron-tab</title><script>location.replace(${next})</script>`, 'text/html');
+      return send(res, 200, `<!doctype html><meta charset="utf-8"><title>electron2web</title><script>location.replace(${next})</script>`, 'text/html');
     }
 
     if (!tokenMatches(readCookie(req, COOKIE))) {
-      return send(res, 401, page('Not authorized', '<p>Open the URL that <code>electron-tab</code> printed in your terminal.</p>'), 'text/html');
+      return send(res, 401, page('Not authorized', '<p>Open the URL that <code>electron2web</code> printed in your terminal.</p>'), 'text/html');
     }
 
     // Not on the app's own origins: its links carry the token, and the app's scripts could read them.
@@ -760,7 +760,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
     if (url.pathname.startsWith(`${PREFIX}/`)) return handleEndpoint(host, req, url, res);
     if (slot.protocol === 'file:') return serveFile(slot, req, url.pathname, res);
     if (slot.protocol === 'http:' || slot.protocol === 'https:') return proxyHttp(slot, req, res);
-    return send(res, 501, `electron-tab cannot serve ${slot.protocol} URLs yet`);
+    return send(res, 501, `electron2web cannot serve ${slot.protocol} URLs yet`);
   }
 
   // Whether a window's page may talk to the bridge from this host: on an o<n> host only that
@@ -797,11 +797,11 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
     const state = windows.get(Number(url.searchParams.get('win')));
     if (!windowAllowed(host, state)) {
       if (url.pathname === `${PREFIX}/sync`) return send(res, 410, 'the window was closed');
-      return send(res, 404, `console.error('[electron-tab] unknown window');`, 'text/javascript');
+      return send(res, 404, `console.error('[electron2web] unknown window');`, 'text/javascript');
     }
     if (url.pathname === `${PREFIX}/boot.js`) {
       const base = host.kind === 'public' ? state.slot.publicBase : '';
-      return sendCached(req, res, `globalThis.__ELECTRON_TAB__ = ${JSON.stringify(bootConfig(state, base))};\n`, 'text/javascript; charset=utf-8');
+      return sendCached(req, res, `globalThis.__ELECTRON2WEB__ = ${JSON.stringify(bootConfig(state, base))};\n`, 'text/javascript; charset=utf-8');
     }
     if (url.pathname === `${PREFIX}/preload.js`) {
       // Rebuilt only when one of its source files changed; otherwise the browser gets a 304.
@@ -877,7 +877,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       upstreamAddresses.delete(target.host);
       logger.debug(`proxy ${req.method} ${req.url} → ${target.origin} failed: ${err.message}`);
       if (res.headersSent) return res.destroy();
-      send(res, 502, `electron-tab could not reach ${target.origin}: ${err.message}`);
+      send(res, 502, `electron2web could not reach ${target.origin}: ${err.message}`);
     });
     if (retried) upstream.end();
     else req.pipe(upstream);
@@ -1023,7 +1023,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
   function shellPage(isPublic) {
     const config = JSON.stringify({ token: isPublic ? null : token, layout, public: isPublic }).replace(/</g, '\\u003c');
     return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>electron-tab</title><link rel="stylesheet" href="${PREFIX}/shell.css">
+<title>electron2web</title><link rel="stylesheet" href="${PREFIX}/shell.css">
 <script id="ew-config" type="application/json">${config}</script><script src="${PREFIX}/shell.js" defer></script>
 </head><body class="ew-layout-${layout}"></body></html>`;
   }
@@ -1047,7 +1047,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       })
       .join('');
     return page(
-      'electron-tab',
+      'electron2web',
       `<p><a href="${escapeHtml(isPublic ? `${PREFIX}/app` : authUrl(shellHost, '/'))}">Open the app (all windows)</a></p>
 <table><thead><tr><th>Window</th><th>BrowserWindow.id</th><th>Title</th><th>Loads</th><th>Visible</th><th>Tabs</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7">No windows yet.</td></tr>'}</tbody></table>`,
       3,
@@ -1063,7 +1063,7 @@ function createBridge({ electron, port, token, layout, publicUrl }) {
       'Not available over the public host',
       `<p>This window loads <code>${escapeHtml(state.target?.origin ?? '')}</code>. Through <code>--public-host</code> only one
 http(s) origin can be served (here <code>${escapeHtml(rootSlot?.origin ?? '')}</code>), plus <code>loadFile()</code> pages.
-Open it on this machine instead, with the Open link electron-tab printed in its terminal.</p>`,
+Open it on this machine instead, with the Open link electron2web printed in its terminal.</p>`,
     );
   }
 
@@ -1072,7 +1072,7 @@ Open it on this machine instead, with the Open link electron-tab printed in its 
   const server = http.createServer((req, res) => {
     handleRequest(req, res).catch((err) => {
       logger.error(`request ${req.url} failed:`, err);
-      if (!res.headersSent) send(res, 500, `electron-tab: ${err?.message ?? err} (details in the terminal)`);
+      if (!res.headersSent) send(res, 500, `electron2web: ${err?.message ?? err} (details in the terminal)`);
       else res.destroy();
     });
   });
@@ -1083,7 +1083,7 @@ Open it on this machine instead, with the Open link electron-tab printed in its 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && ++attempts < 40) return setTimeout(() => server.listen(port, '127.0.0.1'), 250);
     logger.error(`could not listen on 127.0.0.1:${port}: ${err.message}`);
-    if (err.code === 'EADDRINUSE') logger.warn(`is another electron-tab still running? Stop it or pass --port <n>.`);
+    if (err.code === 'EADDRINUSE') logger.warn(`is another electron2web still running? Stop it or pass --port <n>.`);
   });
   server.once('listening', () => {
     // Printed after the dev server's own output, which advertises its direct URL
@@ -1102,7 +1102,7 @@ Open it on this machine instead, with the Open link electron-tab printed in its 
     const sessionFile = writeSessionFile(session);
     // --open: the CLI leaves a marker; whichever Electron process removes it opens the browser,
     // so restarts (electron-vite --watch) don't open another tab.
-    const openMarker = process.env.ELECTRON_TAB_OPEN;
+    const openMarker = process.env.ELECTRON2WEB_OPEN;
     if (openMarker) {
       fs.unlink(openMarker, (err) => {
         if (!err) electron.shell.openExternal(session.url).catch((openErr) => logger.warn(`could not open the browser: ${openErr.message}`));
@@ -1110,7 +1110,7 @@ Open it on this machine instead, with the Open link electron-tab printed in its 
     }
     const row = (label, value, note = '') => `  ${c.green('➜')}  ${c.bold(label.padEnd(15))}${value}${note && `  ${c.dim(note)}`}\n`;
     console.log(
-      `\n${c.cyan('[electron-tab]')} ${c.bold.green('ready.')} Open this in Chrome: ` +
+      `\n${c.cyan('[electron2web]')} ${c.bold.green('ready.')} Open this in Chrome: ` +
         c.dim(`(Electron up in ${process.uptime().toFixed(1)}s · layout ${layout} · port ${port})`) +
         '\n\n' +
         row('Open:', logger.url(session.url)) +
@@ -1119,7 +1119,7 @@ Open it on this machine instead, with the Open link electron-tab printed in its 
         row('State JSON:', c.cyan(session.stateUrl), 'for tests and agents') +
         (sessionFile ? row('Session file:', c.cyan(sessionFile), 'these URLs, for scripts') : '') +
         `\n  ${c.dim("Not the dev server's own localhost link: it has no Electron behind it.")}\n` +
-        (process.env.ELECTRON_TAB_DEBUG ? `  ${c.dim('debug on: window state and IPC calls are logged')}
+        (process.env.ELECTRON2WEB_DEBUG ? `  ${c.dim('debug on: window state and IPC calls are logged')}
 ` : '') +
         (publicOrigin ? `  ${c.yellow.bold('!')} ${c.yellow("Anyone with the Remote link controls this app's main process (files, shell). Share it carefully.")}\n` : ''),
     );
@@ -1164,15 +1164,15 @@ function loader(ids, prefix, runtime) {
   const fromQuery = new URLSearchParams(location.search).get('__ew_win');
   // An explicit ?__ew_win wins: window.name survives navigations within the same tab.
   const id = [fromQuery, fromName].map(Number).find((n) => ids.includes(n)) ?? ids[0];
-  if (id === undefined) return console.error('[electron-tab] no Electron window is loading this page');
+  if (id === undefined) return console.error('[electron2web] no Electron window is loading this page');
   window.name = `__ew:${id}`;
   document.write(`<script src="${prefix}/boot.js?win=${id}"><\/script><script src="${runtime}"><\/script><script src="${prefix}/preload.js?win=${id}"><\/script>`);
 }
 
-// The ready URLs, for scripts and agents that start electron-tab in the background:
+// The ready URLs, for scripts and agents that start electron2web in the background:
 // session.json for the latest run, session-<port>.json for each run, so two apps on
 // different ports don't hide each other.
-const SESSION_DIR = path.join(os.homedir(), '.electron-tab');
+const SESSION_DIR = path.join(os.homedir(), '.electron2web');
 
 function writeSessionFile(session) {
   const body = `${JSON.stringify(session, null, 2)}\n`;

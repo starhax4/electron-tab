@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const USAGE = `Usage: electron-tab [options] [-- <command that starts electron>]
+const USAGE = `Usage: electron2web [options] [-- <command that starts electron>]
 
 Options:
   --port <n>         port for the bridge (default 4400)
@@ -26,12 +26,12 @@ Options:
   --new-token        replace the saved access token (signs out every open tab)
 
 Examples:
-  electron-tab                         # runs "npx electron ."
-  electron-tab -- npm run dev          # wraps your existing dev script
-  electron-tab yarn start              # the -- is optional
-  electron-tab --open -- npm run dev   # also opens the browser
-  electron-tab --port 5000 --layout tabs -- npx electron-vite dev
-  electron-tab --public-host https://abc.trycloudflare.com -- npm run dev`;
+  electron2web                         # runs "npx electron ."
+  electron2web -- npm run dev          # wraps your existing dev script
+  electron2web yarn start              # the -- is optional
+  electron2web --open -- npm run dev   # also opens the browser
+  electron2web --port 5000 --layout tabs -- npx electron-vite dev
+  electron2web --public-host https://abc.trycloudflare.com -- npm run dev`;
 
 const LAYOUTS = ['desktop', 'tabs', 'single'];
 
@@ -42,7 +42,7 @@ function loadLogger() {
     return require('../src/log.cjs');
   } catch {
     const c = new Proxy((value) => value, { get: () => c });
-    const print = (stream) => (...args) => stream('[electron-tab]', ...args);
+    const print = (stream) => (...args) => stream('[electron2web]', ...args);
     return { c, level: 0, info: print(console.log), warn: print(console.warn), error: print(console.error), url: c };
   }
 }
@@ -60,7 +60,7 @@ function fail(message) {
   process.exit(1);
 }
 
-const TOKEN_FILE = path.join(os.homedir(), '.electron-tab', 'token');
+const TOKEN_FILE = path.join(os.homedir(), '.electron2web', 'token');
 
 function parseArgs(argv) {
   const opts = { port: 4400, newToken: false, open: false, debug: false, layout: 'desktop', native: '', publicHost: '', command: [] };
@@ -121,7 +121,7 @@ function parsePublicHost(value) {
 }
 
 function createOpenMarker() {
-  const marker = path.join(os.tmpdir(), `electron-tab-open-${process.pid}`);
+  const marker = path.join(os.tmpdir(), `electron2web-open-${process.pid}`);
   try {
     fs.writeFileSync(marker, '');
     return marker;
@@ -165,11 +165,11 @@ function checkDependencies() {
     }
   });
   if (missing.length === 0) return;
-  console.error(`${c.red.bold('[electron-tab] missing dependencies:')} ${missing.join(', ')}
+  console.error(`${c.red.bold('[electron2web] missing dependencies:')} ${missing.join(', ')}
 
 Fix one of these ways:
   - install the packed version into your app (brings its dependencies along):
-      npm install -D <path>/electron-tab-<version>.tgz
+      npm install -D <path>/electron2web-<version>.tgz
   - or install them in the tool's own folder:
       cd "${packageDir}"
       npm install`);
@@ -185,16 +185,16 @@ const hookPath = path.join(__dirname, '..', 'src', 'hook.cjs').replace(/\\/g, '/
 const env = {
   ...process.env,
   NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --require "${hookPath}"`.trim(),
-  ELECTRON_TAB_PORT: String(opts.port),
-  ELECTRON_TAB_TOKEN: token,
-  ELECTRON_TAB_LAYOUT: opts.layout,
-  ELECTRON_TAB_NATIVE: opts.native,
-  ...(opts.debug && { ELECTRON_TAB_DEBUG: '1' }),
+  ELECTRON2WEB_PORT: String(opts.port),
+  ELECTRON2WEB_TOKEN: token,
+  ELECTRON2WEB_LAYOUT: opts.layout,
+  ELECTRON2WEB_NATIVE: opts.native,
+  ...(opts.debug && { ELECTRON2WEB_DEBUG: '1' }),
   // The bridge opens the browser once, then removes this marker so Electron restarts don't.
-  ...(opts.open && { ELECTRON_TAB_OPEN: createOpenMarker() }),
-  ELECTRON_TAB_PUBLIC_HOST: opts.publicHost,
+  ...(opts.open && { ELECTRON2WEB_OPEN: createOpenMarker() }),
+  ELECTRON2WEB_PUBLIC_HOST: opts.publicHost,
   // Electron's stdout may not look like a terminal; pass our color support down.
-  ELECTRON_TAB_COLOR: String(log.level),
+  ELECTRON2WEB_COLOR: String(log.level),
 };
 
 console.log();

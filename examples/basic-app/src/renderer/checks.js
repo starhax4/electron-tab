@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 
 $('runtime').textContent = navigator.userAgent.includes('Electron')
   ? 'Running inside Electron'
-  : 'Running in a regular browser tab via electron-tab';
+  : 'Running in a regular browser tab via electron2web';
 
 api.onTick((count) => {
   $('clock').textContent = String(count);

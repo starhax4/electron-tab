@@ -2,8 +2,8 @@
 // preload imports, backed by a WebSocket to the bridge in Electron's main process.
 import { pack, unpack } from '../codec.cjs';
 
-const PREFIX = '/__electron-tab';
-const config = globalThis.__ELECTRON_TAB__;
+const PREFIX = '/__electron2web';
+const config = globalThis.__ELECTRON2WEB__;
 
 // ------------------------------------------------------------------ connection
 
@@ -25,7 +25,7 @@ function connect() {
   socket.onmessage = (event) => receive(unpack(new Uint8Array(event.data)));
   socket.onclose = () => {
     open = false;
-    for (const { reject } of pending.values()) reject(new Error('[electron-tab] lost connection to the Electron main process'));
+    for (const { reject } of pending.values()) reject(new Error('[electron2web] lost connection to the Electron main process'));
     pending.clear();
     // A closed window stays closed; reloading would attach the page to another window.
     if (windowClosed) return;
@@ -37,7 +37,7 @@ function connect() {
 function post(message) {
   // After its window closed, the page's messages have nowhere to go (invoke rejects).
   if (windowClosed) {
-    if (message.type === 'invoke') throw new Error('[electron-tab] the window was closed');
+    if (message.type === 'invoke') throw new Error('[electron2web] the window was closed');
     return;
   }
   const frame = pack(message);
@@ -51,7 +51,7 @@ function waitForBridge() {
     try {
       const res = await fetch(`${PREFIX}/ping`, { cache: 'no-store' });
       if (res.ok) return location.reload();
-      if (res.status === 401) return showBanner('Not authorized — reopen the URL printed by electron-tab.');
+      if (res.status === 401) return showBanner('Not authorized — reopen the URL printed by electron2web.');
     } catch {}
     waitForBridge();
   }, 400);
@@ -106,7 +106,7 @@ const ops = {
 
 async function runCall({ id, op, payload }) {
   try {
-    if (!Object.hasOwn(ops, op)) throw new Error(`[electron-tab] unknown operation '${op}'`);
+    if (!Object.hasOwn(ops, op)) throw new Error(`[electron2web] unknown operation '${op}'`);
     const value = await ops[op](payload);
     post({ type: 'call-result', id, value });
   } catch (err) {
@@ -115,9 +115,9 @@ async function runCall({ id, op, payload }) {
 }
 
 // The code is served by the bridge as a same-origin script, which the page's CSP allows
-// where eval usually isn't. The script hands its function back through __electronTabExec.
+// where eval usually isn't. The script hands its function back through __electron2webExec.
 const execWaiting = new Map();
-globalThis.__electronTabExec = (key, fn) => {
+globalThis.__electron2webExec = (key, fn) => {
   execWaiting.get(key)?.(fn);
   execWaiting.delete(key);
 };
@@ -128,7 +128,7 @@ async function runExecScript(key) {
     const script = document.createElement('script');
     script.src = `${PREFIX}/exec?win=${config.winId}&key=${encodeURIComponent(key)}`;
     const fail = (reason) => {
-      if (execWaiting.delete(key)) reject(new Error(`[electron-tab] executeJavaScript failed: ${reason}`));
+      if (execWaiting.delete(key)) reject(new Error(`[electron2web] executeJavaScript failed: ${reason}`));
     };
     // A script that loads but never calls back had a syntax error (reported in the console).
     script.onload = () => (script.remove(), fail('the code could not be parsed'));
@@ -166,14 +166,14 @@ function dispatch(channel, args) {
     try {
       entry.fn(event, ...args);
     } catch (err) {
-      console.error(`[electron-tab] listener for '${channel}' threw`, err);
+      console.error(`[electron2web] listener for '${channel}' threw`, err);
     }
   }
 }
 
 function unsupported(name) {
   return () => {
-    throw new Error(`[electron-tab] ${name} is not supported yet`);
+    throw new Error(`[electron2web] ${name} is not supported yet`);
   };
 }
 
@@ -196,12 +196,12 @@ const ipcRenderer = {
   sendSync(channel, ...args) {
     // Synchronous XHR is deprecated but still allowed on the main thread, and it is
     // the only way to block for a reply the way Electron's sendSync does.
-    if (windowClosed) throw new Error(`[electron-tab] sendSync('${channel}') failed: the window was closed`);
+    if (windowClosed) throw new Error(`[electron2web] sendSync('${channel}') failed: the window was closed`);
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${PREFIX}/sync?win=${config.winId}`, false);
     xhr.setRequestHeader('content-type', 'application/octet-stream');
     xhr.send(pack({ channel, args }));
-    if (xhr.status !== 200) throw new Error(`[electron-tab] sendSync('${channel}') failed: ${xhr.status} ${xhr.responseText}`);
+    if (xhr.status !== 200) throw new Error(`[electron2web] sendSync('${channel}') failed: ${xhr.status} ${xhr.responseText}`);
     return unpack(Uint8Array.from(atob(xhr.responseText), (c) => c.charCodeAt(0))).value;
   },
   on: (channel, fn) => addListener(channel, fn, false),
@@ -246,7 +246,7 @@ const webFrame = {
     const style = document.createElement('style');
     style.textContent = css;
     document.head.append(style);
-    const key = `electron-tab-${++cssKey}`;
+    const key = `electron2web-${++cssKey}`;
     insertedCss.set(key, style);
     return key;
   },
@@ -259,7 +259,7 @@ const webFrame = {
 
 const webUtils = {
   getPathForFile() {
-    console.warn('[electron-tab] webUtils.getPathForFile() cannot see real paths in the browser; returning ""');
+    console.warn('[electron2web] webUtils.getPathForFile() cannot see real paths in the browser; returning ""');
     return '';
   },
 };
@@ -281,9 +281,9 @@ const processShim = {
 };
 
 function unsupportedModule(name) {
-  console.warn(`[electron-tab] preload imports Node module '${name}', which does not exist in the browser. Calls into it will throw.`);
+  console.warn(`[electron2web] preload imports Node module '${name}', which does not exist in the browser. Calls into it will throw.`);
   const fail = (prop) => () => {
-    throw new Error(`[electron-tab] '${name}.${String(prop)}' is not available in the browser`);
+    throw new Error(`[electron2web] '${name}.${String(prop)}' is not available in the browser`);
   };
   return new Proxy(function () {}, {
     get: (_, prop) => (prop === '__esModule' ? false : fail(prop)),
@@ -298,8 +298,8 @@ globalThis.__electronShim = { ipcRenderer, contextBridge, webFrame, webUtils, pr
 let banner = null;
 function showBanner(text) {
   const render = () => {
-    banner ??= Object.assign(document.createElement('div'), { id: 'electron-tab-banner' });
-    banner.textContent = `electron-tab: ${text}`;
+    banner ??= Object.assign(document.createElement('div'), { id: 'electron2web-banner' });
+    banner.textContent = `electron2web: ${text}`;
     banner.style.cssText =
       'position:fixed;inset:0 0 auto 0;z-index:2147483647;padding:8px 12px;font:13px system-ui,sans-serif;background:#b42318;color:#fff';
     document.body.append(banner);

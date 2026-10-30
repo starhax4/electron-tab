@@ -1,10 +1,10 @@
 'use strict';
 
-// Loaded into every Node process started under `electron-tab` (via NODE_OPTIONS),
+// Loaded into every Node process started under `electron2web` (via NODE_OPTIONS),
 // including npm, Vite and electron-vite. It only acts inside Electron's main process.
 if (!process.versions.electron) return;
 
-const GUARD = Symbol.for('electron-tab.hook');
+const GUARD = Symbol.for('electron2web.hook');
 if (globalThis[GUARD]) return;
 globalThis[GUARD] = true;
 
@@ -27,9 +27,9 @@ function safeInstall(electron) {
   try {
     return install(electron);
   } catch (err) {
-    console.error(`\n[electron-tab] could not start the bridge; running as plain Electron instead.\n  ${err.message}`);
+    console.error(`\n[electron2web] could not start the bridge; running as plain Electron instead.\n  ${err.message}`);
     if (err.code === 'MODULE_NOT_FOUND') {
-      console.error(`  Install electron-tab's dependencies: run "npm install" in ${require('node:path').dirname(__dirname)}\n`);
+      console.error(`  Install electron2web's dependencies: run "npm install" in ${require('node:path').dirname(__dirname)}\n`);
     }
     return electron;
   }
@@ -40,16 +40,16 @@ function install(electron) {
   const patches = require('./patches/index.cjs');
   const bridge = createBridge({
     electron,
-    port: Number(process.env.ELECTRON_TAB_PORT || 4400),
-    token: process.env.ELECTRON_TAB_TOKEN,
-    layout: process.env.ELECTRON_TAB_LAYOUT || 'desktop',
-    publicUrl: process.env.ELECTRON_TAB_PUBLIC_HOST || null,
+    port: Number(process.env.ELECTRON2WEB_PORT || 4400),
+    token: process.env.ELECTRON2WEB_TOKEN,
+    layout: process.env.ELECTRON2WEB_LAYOUT || 'desktop',
+    publicUrl: process.env.ELECTRON2WEB_PUBLIC_HOST || null,
   });
   // Keep the token out of processes the app spawns and of crash reports that capture the env.
-  delete process.env.ELECTRON_TAB_TOKEN;
+  delete process.env.ELECTRON2WEB_TOKEN;
 
   // `--native dialog,notification` keeps those features on the host's real OS UI.
-  const native = new Set((process.env.ELECTRON_TAB_NATIVE || '').split(',').map((name) => name.trim()).filter(Boolean));
+  const native = new Set((process.env.ELECTRON2WEB_NATIVE || '').split(',').map((name) => name.trim()).filter(Boolean));
   const surface = (name) => (native.has(name) || native.has('all') ? 'native' : 'web');
 
   const overrides = {};

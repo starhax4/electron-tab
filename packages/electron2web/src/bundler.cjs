@@ -9,25 +9,25 @@ const log = require('./log.cjs');
 
 const RUNTIME_ENTRY = path.join(__dirname, 'client', 'runtime.js');
 const NODE_BUILTINS = new Set(builtinModules.flatMap((name) => [name, `node:${name}`]));
-const MAP_PATH = '/__electron-tab/map';
+const MAP_PATH = '/__electron2web/map';
 
 // Source maps are served separately (DevTools only fetches them when open), keyed by the
 // hash of the code they belong to, so the scripts themselves stay small.
 const sourceMaps = new Map();
 
 const shimPlugin = {
-  name: 'electron-tab-shims',
+  name: 'electron2web-shims',
   setup(build) {
-    build.onResolve({ filter: /^electron(\/(renderer|common))?$/ }, (args) => ({ path: args.path, namespace: 'electron-tab-electron' }));
-    build.onLoad({ filter: /.*/, namespace: 'electron-tab-electron' }, () => ({
+    build.onResolve({ filter: /^electron(\/(renderer|common))?$/ }, (args) => ({ path: args.path, namespace: 'electron2web-electron' }));
+    build.onLoad({ filter: /.*/, namespace: 'electron2web-electron' }, () => ({
       contents: 'module.exports = globalThis.__electronShim;',
       loader: 'js',
     }));
 
     build.onResolve({ filter: /^(node:)?[a-z_][a-z0-9_/]*$/ }, (args) =>
-      NODE_BUILTINS.has(args.path) ? { path: args.path, namespace: 'electron-tab-builtin' } : undefined,
+      NODE_BUILTINS.has(args.path) ? { path: args.path, namespace: 'electron2web-builtin' } : undefined,
     );
-    build.onLoad({ filter: /.*/, namespace: 'electron-tab-builtin' }, (args) => ({
+    build.onLoad({ filter: /.*/, namespace: 'electron2web-builtin' }, (args) => ({
       contents: `module.exports = globalThis.__electronShim.unsupportedModule(${JSON.stringify(args.path)});`,
       loader: 'js',
     }));
@@ -55,7 +55,7 @@ async function bundle(options) {
   const hash = hashOf(code);
   if (map) sourceMaps.set(hash, map);
   const inputs = Object.keys(result.metafile.inputs)
-    .filter((input) => !input.startsWith('electron-tab-'))
+    .filter((input) => !input.startsWith('electron2web-'))
     .map((input) => path.resolve(input));
   return { code: map ? `${code}//# sourceMappingURL=${MAP_PATH}/${hash}.js.map\n` : code, hash, inputs };
 }
@@ -104,7 +104,7 @@ async function buildPreload(preloadPath) {
   } catch (err) {
     const message = `failed to bundle preload ${preloadPath}:\n${err.message}`;
     log.error(message);
-    const code = `console.error(${JSON.stringify(`[electron-tab] ${message}`)});`;
+    const code = `console.error(${JSON.stringify(`[electron2web] ${message}`)});`;
     return { code, hash: hashOf(code), inputs: [preloadPath], mtimes: [NaN] };
   }
 }

@@ -1,4 +1,4 @@
-# electron-tab v1 beta: launch guide
+# electron2web v1 beta: launch guide
 
 Where things stand (27 Oct 2026) and the shortest path to a public beta.
 
@@ -10,15 +10,15 @@ Where things stand (27 Oct 2026) and the shortest path to a public beta.
 | Shell UX (desktop/tabs/single, taskbar, numbering, maximized main window) | Done |
 | Speed (caching, keep-alive proxy, 304s, gzip over tunnels) | Done |
 | CLI/DX (colors, `--open`, `--debug`, session file) | Done |
-| Agents (`window.electronTab`, `/state`, stable selectors) | Done |
+| Agents (`window.electron2web`, `/state`, stable selectors) | Done |
 | Security pass (referrer leak, token exposure, crash-on-bad-frame, call spoofing, open redirect) | Fixed; see README "Security" |
 | Real app | A large webpack + React production app runs on it |
 
 ## 2. Before you publish: must do
 
-1. ~~Pick a name~~: **electron-tab** (free on npm as of 27 Oct 2026).
+1. ~~Pick a name~~: **electron2web** (free on npm as of 31 Oct 2026; was electron-tab until 0.1.0-beta.2).
 2. ~~LICENSE~~: MIT, Hamza Islam.
-3. ~~Git repo~~: github.com/starhax4/electron-tab, with CI, issue templates, CONTRIBUTING and
+3. ~~Git repo~~: github.com/starhax4/electron2web, with CI, issue templates, CONTRIBUTING and
    SECURITY.
 4. **Test on more real apps**, ideally a plain `electron .` app (no Vite) and a
    `loadFile()` production build. Both paths are coded but not yet checked against a real app.
@@ -29,15 +29,15 @@ Where things stand (27 Oct 2026) and the shortest path to a public beta.
 ## 3. Publish steps
 
 ```bash
-cd packages/electron-tab
-npm version 0.1.0-beta.1 --no-git-tag-version
+cd packages/electron2web
+npm version 0.1.0-beta.2 --no-git-tag-version
 npm pack --dry-run
 npm login
 npm publish --tag beta --access public
 ```
 
-- `--tag beta` keeps plain `npm i electron-tab` from picking up the beta.
-- Testers install with `npm i -D electron-tab@beta`, or `npx electron-tab@beta -- npm run dev`.
+- `--tag beta` keeps plain `npm i electron2web` from picking up the beta.
+- Testers install with `npm i -D electron2web@beta`, or `npx electron2web@beta -- npm run dev`.
 - Then update `install-global.*` and HOW-TO-USE to the new version (or drop the tgz in
   favour of npm).
 
@@ -54,13 +54,13 @@ npm publish --tag beta --access public
   - native dialogs, menus, tray and notifications still open on the host machine (the plan
     for drawing them in the tab is in `electron-api-coverage-plan.md`).
 - **Ask testers for:** their Electron version, OS, bundler, layout, and the first
-  `[electron-tab]` error line. Running with `--debug` gives the most detail.
+  `[electron2web]` error line. Running with `--debug` gives the most detail.
 
 ## 5. Known limits to state in the README (already listed)
 
 - Any script on a window's page can call IPC directly (same as a preload in Electron), so
   don't load untrusted remote content in a window that has a preload.
-- The access token is long-lived (`~/.electron-tab/token`). Rotate it with `--new-token` if a
+- The access token is long-lived (`~/.electron2web/token`). Rotate it with `--new-token` if a
   link leaks. Per-run session cookies are on the roadmap.
 - Window numbers are display numbers; `BrowserWindow.id` (in `windows()[i].id`) is unchanged.
 

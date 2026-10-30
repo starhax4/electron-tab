@@ -1,4 +1,4 @@
-# electron-tab (beta)
+# electron2web (beta)
 
 Dev tool: run your whole Electron app in a normal Chrome tab, while the **real** Electron
 main process keeps running underneath. Every window becomes a panel in one tab, so people and
@@ -24,10 +24,10 @@ Chrome tab: the shell (app.localhost:4400)          real Electron main process (
 
 ```bash
 # wrap whatever already starts Electron
-npx electron-tab -- npm run dev
-npx electron-tab -- electron-vite dev --watch
-npx electron-tab            # defaults to: npx electron .
-npx electron-tab --port 5000 --layout tabs -- npm start
+npx electron2web -- npm run dev
+npx electron2web -- electron-vite dev --watch
+npx electron2web            # defaults to: npx electron .
+npx electron2web --port 5000 --layout tabs -- npm start
 ```
 
 | Option | What it does |
@@ -42,26 +42,26 @@ npx electron-tab --port 5000 --layout tabs -- npm start
 | `--debug` | Log window state changes and every IPC call with its timing |
 | `--new-token` | Replace the saved access token |
 
-Once Electron is up it prints `[electron-tab] ready. Open this in Chrome:` with an
-`http://app.localhost:4400/__electron-tab/auth?token=…` URL. Open that one. **Don't** open the
+Once Electron is up it prints `[electron2web] ready. Open this in Chrome:` with an
+`http://app.localhost:4400/__electron2web/auth?token=…` URL. Open that one. **Don't** open the
 dev server's own link (e.g. Vite's `http://localhost:5173`): that page has no Electron behind
 it, so `window.api` is undefined.
 
-The token is saved in `~/.electron-tab/token` and reused, so open tabs reconnect by themselves
+The token is saved in `~/.electron2web/token` and reused, so open tabs reconnect by themselves
 after a restart. Old `http://127.0.0.1:4400/` bookmarks redirect to the shell.
 
-- `http://app.localhost:4400/__electron-tab/` lists the windows, with an "open alone" link for
+- `http://app.localhost:4400/__electron2web/` lists the windows, with an "open alone" link for
   each (one window per tab, no shell; handy for tests and agents).
 - `http://app.localhost:4400/?__ew_win=<id>` opens one window alone.
-- `http://app.localhost:4400/__electron-tab/state` returns every window's state as JSON
+- `http://app.localhost:4400/__electron2web/state` returns every window's state as JSON
   (bounds, focus, visibility, title, URL).
-- `~/.electron-tab/session.json` holds these URLs (plus port and pid) for the latest run, and
+- `~/.electron2web/session.json` holds these URLs (plus port and pid) for the latest run, and
   `session-<port>.json` for each port; both are removed when that run quits cleanly.
-- `--debug` (or `ELECTRON_TAB_DEBUG=1`) logs window state changes and IPC calls.
+- `--debug` (or `ELECTRON2WEB_DEBUG=1`) logs window state changes and IPC calls.
 - Windows are numbered on their badge with the lowest free number, so numbers are reused after
   windows close (`BrowserWindow.id` never is). The app's first window opens maximized in the
   desktop layout, unless it is fixed-size.
-- In the shell tab, `window.electronTab` has `windows()`, `focused()`, `focus(n)`,
+- In the shell tab, `window.electron2web` has `windows()`, `focused()`, `focus(n)`,
   `minimize(n)`, `maximize(n)`, `restore(n)`, `close(n)` and `frame(n)`, where `n` is the window
   number. Panels and taskbar entries carry `data-window-number`, `data-window-id`
   (`BrowserWindow.id`) and `data-state` (`focused`, `background`, `minimized`, `hidden`).
@@ -108,7 +108,7 @@ after a restart. Old `http://127.0.0.1:4400/` bookmarks redirect to the shell.
   page doesn't see a fake Node environment.
 - **Runtime.** The browser side (IPC, msgpack) is built once and served as
   `runtime.<hash>.js`, cached by the browser for good; source maps are separate files.
-- **Dev server.** Requests reuse keep-alive connections to the dev server. HTML is proxied with one `<script src="/__electron-tab/loader.js">` injected
+- **Dev server.** Requests reuse keep-alive connections to the dev server. HTML is proxied with one `<script src="/__electron2web/loader.js">` injected
   first in `<head>` (external, so a `script-src 'self'` CSP still allows it).
   `X-Frame-Options` and CSP `frame-ancestors` are dropped so the page can sit in a panel.
   Other WebSocket upgrades (Vite HMR) are piped through to that origin's server.
@@ -125,9 +125,9 @@ The roadmap for the rest of the Electron API is in `docs/electron-api-coverage-p
 prints a second auth link for it. A tunnel gives one hostname, so the `o<n>` subdomains
 don't exist there:
 
-- the shell is at `/__electron-tab/app`;
+- the shell is at `/__electron2web/app`;
 - the first http(s) origin the app loads (its dev server) is served at `/`;
-- `loadFile()` folders are served under `/__electron-tab/s<n>/` (built renderers use
+- `loadFile()` folders are served under `/__electron2web/s<n>/` (built renderers use
   relative paths);
 - a second http(s) origin can't be served there; its windows show a note and stay local-only;
 - all windows share one origin, so they share storage, and the shell needs no token;
@@ -147,14 +147,14 @@ The bridge exposes your main process, which has full filesystem and native acces
 - binds to `127.0.0.1` only;
 - rejects any `Host` other than `app.localhost:<port>`, its `o<n>.` subdomains, and
   `127.0.0.1:<port>` / `localhost:<port>` (DNS rebinding);
-- requires a random token (saved in `~/.electron-tab/token`), exchanged per origin for an
+- requires a random token (saved in `~/.electron2web/token`), exchanged per origin for an
   `HttpOnly; SameSite=Strict` cookie;
 - requires a same-origin `Origin` on every WebSocket and on `sendSync`. Browsers don't apply
   CORS to WebSockets, so this check is what stops other sites from connecting;
 - sends `Referrer-Policy: no-referrer` on its own pages and drops Referers that point at
   them, so `/auth?token=…` never reaches the app's `document.referrer`, analytics or servers;
 - never serves token-bearing pages (the window list) on the app's own origins, and removes
-  `ELECTRON_TAB_TOKEN` from the main process's environment once read;
+  `ELECTRON2WEB_TOKEN` from the main process's environment once read;
 - only lets the window (or shell) a call was sent to answer it, caps `sendSync` bodies at
   64 MB, and survives malformed socket frames without an uncaught exception.
 
@@ -182,7 +182,7 @@ Known limits, as in Electron itself with a preload:
 - auto-reconnect after an Electron main-process restart
 - `--public-host` through a stand-in tunnel (another hostname and port): all IPC checks pass,
   Vite HMR connects, a second window gets its preload, `loadFile()` build loads under
-  `/__electron-tab/s1/`; foreign Host, wrong Origin on WebSocket and `sendSync`, and
+  `/__electron2web/s1/`; foreign Host, wrong Origin on WebSocket and `sendSync`, and
   missing cookie are refused; nginx-style `X-Forwarded-Host` is accepted. Not yet tried
   against a real https tunnel.
 

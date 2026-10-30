@@ -9,7 +9,7 @@ function createWindow() {
     width: 900,
     height: 700,
     show: false,
-    title: 'electron-tab basic app',
+    title: 'electron2web basic app',
     webPreferences: { preload: join(__dirname, '../preload/index.js') },
   });
 
